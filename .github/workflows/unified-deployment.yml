@@ -1,0 +1,272 @@
+# GSFP Unified Deployment Pipeline
+# This workflow deploys both admin-dashboard and frontend applications
+# ensuring they stay synchronized and deployed together
+
+name: GSFP Unified Deployment
+
+on:
+  push:
+    branches: [ main, production ]
+  pull_request:
+    branches: [ main, production ]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '18'
+  ADMIN_APP_NAME: 'gsfp-admin-dashboard'
+  FRONTEND_APP_NAME: 'gsfp-public-website'
+
+jobs:
+  # Validate configuration and dependencies
+  validate:
+    runs-on: ubuntu-latest
+    outputs:
+      should_deploy: ${{ steps.check.outputs.should_deploy }}
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Check if deployment needed
+      id: check
+      run: |
+        # Check if there are changes in relevant directories
+        if git diff --quiet HEAD~1 -- admin-dashboard frontend shared docs; then
+          echo "should_deploy=false" >> $GITHUB_OUTPUT
+        else
+          echo "should_deploy=true" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Generate version
+      id: version
+      run: |
+        # Generate semantic version based on commit history
+        VERSION=$(npm version --no-git-tag-version patch | sed 's/^v//')
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Generated version: $VERSION"
+
+    - name: Validate shared configuration
+      run: |
+        cd shared
+        npm install
+        npm run validate-config
+      env:
+        CI: true
+
+  # Build and test admin dashboard
+  build-admin:
+    needs: validate
+    if: needs.validate.outputs.should_deploy == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: admin-dashboard/package-lock.json
+
+    - name: Install admin dependencies
+      run: |
+        cd admin-dashboard
+        npm ci
+
+    - name: Validate admin configuration
+      run: |
+        cd admin-dashboard
+        npm run validate-config
+      env:
+        NODE_ENV: production
+        REACT_APP_FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+
+    - name: Run admin tests
+      run: |
+        cd admin-dashboard
+        npm test -- --coverage --watchAll=false
+      env:
+        CI: true
+
+    - name: Build admin dashboard
+      run: |
+        cd admin-dashboard
+        npm run build
+      env:
+        NODE_ENV: production
+        REACT_APP_FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
+        REACT_APP_FIREBASE_AUTH_DOMAIN: ${{ secrets.FIREBASE_AUTH_DOMAIN }}
+        REACT_APP_FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+        REACT_APP_FIREBASE_STORAGE_BUCKET: ${{ secrets.FIREBASE_STORAGE_BUCKET }}
+        REACT_APP_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
+        REACT_APP_FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
+
+    - name: Upload admin build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: admin-dashboard-build
+        path: admin-dashboard/build/
+
+  # Build and test frontend
+  build-frontend:
+    needs: validate
+    if: needs.validate.outputs.should_deploy == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+
+    - name: Install frontend dependencies
+      run: |
+        cd frontend
+        npm ci
+
+    - name: Validate frontend configuration
+      run: |
+        cd frontend
+        npm run validate-config
+      env:
+        NODE_ENV: production
+        REACT_APP_FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+
+    - name: Run frontend tests
+      run: |
+        cd frontend
+        npm test -- --coverage --watchAll=false
+      env:
+        CI: true
+
+    - name: Build frontend
+      run: |
+        cd frontend
+        npm run build
+      env:
+        NODE_ENV: production
+        REACT_APP_FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
+        REACT_APP_FIREBASE_AUTH_DOMAIN: ${{ secrets.FIREBASE_AUTH_DOMAIN }}
+        REACT_APP_FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+        REACT_APP_FIREBASE_STORAGE_BUCKET: ${{ secrets.FIREBASE_STORAGE_BUCKET }}
+        REACT_APP_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
+        REACT_APP_FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
+        REACT_APP_STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY }}
+        REACT_APP_GA_TRACKING_ID: ${{ secrets.GA_TRACKING_ID }}
+
+    - name: Upload frontend build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: frontend-build
+        path: frontend/build/
+
+  # Deploy admin dashboard
+  deploy-admin:
+    needs: [validate, build-admin]
+    if: needs.validate.outputs.should_deploy == 'true' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+    - name: Download admin build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: admin-dashboard-build
+        path: admin-dashboard-build/
+
+    - name: Deploy to Netlify (Admin)
+      uses: nwtgck/actions-netlify@v2.0
+      with:
+        publish-dir: './admin-dashboard-build'
+        production-branch: main
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        deploy-message: "Deploy GSFP Admin Dashboard v${{ needs.validate.outputs.version }}"
+        netlify-auth-token: ${{ secrets.NETLIFY_AUTH_TOKEN_ADMIN }}
+        netlify-site-id: ${{ secrets.NETLIFY_SITE_ID_ADMIN }}
+        enable-commit-comment: false
+
+  # Deploy frontend
+  deploy-frontend:
+    needs: [validate, build-frontend]
+    if: needs.validate.outputs.should_deploy == 'true' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+    - name: Download frontend build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: frontend-build
+        path: frontend-build/
+
+    - name: Deploy to Netlify (Frontend)
+      uses: nwtgck/actions-netlify@v2.0
+      with:
+        publish-dir: './frontend-build'
+        production-branch: main
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        deploy-message: "Deploy GSFP Frontend v${{ needs.validate.outputs.version }}"
+        netlify-auth-token: ${{ secrets.NETLIFY_AUTH_TOKEN_FRONTEND }}
+        netlify-site-id: ${{ secrets.NETLIFY_SITE_ID_FRONTEND }}
+        enable-commit-comment: false
+
+  # Run integration tests
+  integration-test:
+    needs: [deploy-admin, deploy-frontend]
+    if: needs.validate.outputs.should_deploy == 'true' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+
+    - name: Install test dependencies
+      run: |
+        cd shared
+        npm install
+
+    - name: Run integration tests
+      run: |
+        cd shared
+        npm run test:integration
+      env:
+        ADMIN_URL: ${{ steps.deploy-admin.outputs.deploy-url }}
+        FRONTEND_URL: ${{ steps.deploy-frontend.outputs.deploy-url }}
+        FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
+        FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+
+  # Notify deployment status
+  notify:
+    needs: [validate, deploy-admin, deploy-frontend, integration-test]
+    if: always() && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Send deployment notification
+      run: |
+        # Send notification to Slack or other systems
+        echo "Deployment completed"
+        echo "Admin URL: ${{ needs.deploy-admin.outputs.deploy-url }}"
+        echo "Frontend URL: ${{ needs.deploy-frontend.outputs.deploy-url }}"
+        echo "Status: ${{ job.status }}"

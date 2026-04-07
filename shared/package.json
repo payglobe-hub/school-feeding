@@ -1,0 +1,63 @@
+{
+  "name": "gsfp-shared",
+  "version": "1.0.0",
+  "description": "Shared services for GSFP Admin-Frontend integration",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "test:integration": "jest --testPathPattern=integration-tests",
+    "test:monitor": "jest --testPathPattern=monitor",
+    "validate-config": "node -e \"require('./dist/config-manager').configManager.validateConfig()\"",
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "eslint src/**/*.ts --fix",
+    "type-check": "tsc --noEmit",
+    "health-check": "node -e \"require('./dist/monitor').integrationMonitor.getHealthStatus()\"",
+    "export-logs": "node -e \"console.log(require('./dist/monitor').integrationMonitor.exportLogs())\""
+  },
+  "dependencies": {
+    "firebase": "^9.23.0"
+  },
+  "devDependencies": {
+    "@types/firebase": "^2.4.32",
+    "@types/jest": "^29.5.3",
+    "@types/node": "^20.4.2",
+    "@typescript-eslint/eslint-plugin": "^6.1.0",
+    "@typescript-eslint/parser": "^6.1.0",
+    "eslint": "^8.45.0",
+    "jest": "^29.6.1",
+    "ts-jest": "^29.1.1",
+    "typescript": "^5.1.6"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "collectCoverageFrom": [
+      "src/**/*.ts",
+      "!src/**/*.d.ts"
+    ],
+    "coverageDirectory": "coverage",
+    "coverageReporters": [
+      "text",
+      "lcov",
+      "html"
+    ],
+    "testMatch": [
+      "**/__tests__/**/*.ts",
+      "**/?(*.)+(spec|test).ts"
+    ],
+    "setupFilesAfterEnv": [
+      "<rootDir>/test-setup.ts"
+    ]
+  },
+  "keywords": [
+    "gsfp",
+    "ghana-school-feeding",
+    "admin",
+    "frontend",
+    "integration",
+    "firebase"
+  ],
+  "author": "GSFP Development Team",
+  "license": "MIT"
+}

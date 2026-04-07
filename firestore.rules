@@ -1,0 +1,286 @@
+// GSFP Firestore Security Rules
+// Comprehensive security rules for Ghana School Feeding Programme
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    function isEditor() {
+      return isAuthenticated() && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'editor'];
+    }
+    
+    function isContentOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isValidTimestamp() {
+      return request.time == request.time;
+    }
+    
+    function isValidContentData(data) {
+      return data.keys().hasAll(['title', 'content', 'author', 'type', 'status']) &&
+             data.title is string &&
+             data.title.size() > 5 && data.title.size() <= 200 &&
+             data.content is string &&
+             data.content.size() > 20 && data.content.size() <= 50000 &&
+             data.author is string &&
+             data.type in ['article', 'event', 'media', 'partner'] &&
+             data.status in ['draft', 'review', 'published', 'archived'];
+    }
+    
+    function canReadContent(status) {
+      if (status == 'published') {
+        return true; // Anyone can read published content
+      }
+      return isEditor(); // Only editors can read unpublished content
+    }
+    
+    function canPublishContent() {
+      return isEditor(); // Editors and admins can publish
+    }
+    
+    function canDeleteContent(authorId) {
+      return isAdmin() || isContentOwner(authorId); // Admins or content owners can delete
+    }
+
+    // Users collection - User profile management
+    match /users/{userId} {
+      // Users can read their own profile
+      allow read: if isAuthenticated() && request.auth.uid == userId;
+      
+      // Users can update their own profile (limited fields)
+      allow write: if isAuthenticated() && 
+                     request.auth.uid == userId &&
+                     request.resource.data.keys().hasAll(['name', 'email']) &&
+                     request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'avatar', 'preferences']);
+      
+      // Only admins can create user profiles
+      allow create: if isAdmin() && 
+                      request.resource.data.keys().hasAll(['name', 'email', 'role']) &&
+                      request.resource.data.role in ['admin', 'editor', 'coordinator', 'viewer'];
+      
+      // Only admins can delete users (except self-deletion)
+      allow delete: if isAdmin() || (isAuthenticated() && request.auth.uid == userId);
+    }
+
+    // Content collection - Main content management
+    match /content/{contentId} {
+      // Read permissions based on content status
+      allow read: if canReadContent(resource.data.status);
+      
+      // Create permissions - Editors can create content
+      allow create: if isEditor() && 
+                     isValidContentData(request.resource.data) &&
+                     request.resource.data.author == request.auth.uid &&
+                     request.resource.data.createdAt == request.time &&
+                     request.resource.data.updatedAt == request.time &&
+                     request.resource.data.createdBy == request.auth.uid &&
+                     request.resource.data.updatedBy == request.auth.uid;
+      
+      // Update permissions
+      allow write: if (isEditor() && 
+                      isValidContentData(request.resource.data) &&
+                      request.resource.data.updatedAt == request.time &&
+                      request.resource.data.updatedBy == request.auth.uid &&
+                      // Content owners can update their own content
+                      (resource.data.author == request.auth.uid ||
+                       // Admins can update any content
+                       isAdmin())) ||
+                      // Publishing permissions
+                      (canPublishContent() && 
+                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'publishedAt', 'updatedBy', 'updatedAt']) &&
+                       request.resource.data.status == 'published');
+      
+      // Delete permissions
+      allow delete: if canDeleteContent(resource.data.author);
+    }
+
+    // Analytics collection - Analytics data
+    match /analytics/{analyticsId} {
+      // Anyone can read aggregated analytics
+      allow read: if true;
+      
+      // System can write analytics data
+      allow write: if false; // Only system processes should write analytics
+      
+      // Create analytics events
+      allow create: if request.resource.data.type in ['page_view', 'user_action', 'system_event'] &&
+                     request.resource.data.timestamp == request.time;
+    }
+
+    // Notifications collection - User notifications
+    match /notifications/{notificationId} {
+      // Users can read their own notifications
+      allow read: if isAuthenticated() && 
+                     resource.data.userId == request.auth.uid;
+      
+      // System can create notifications
+      allow create: if false; // Only system processes should create notifications
+      
+      // Users can update their own notification read status
+      allow write: if isAuthenticated() && 
+                     resource.data.userId == request.auth.uid &&
+                     request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read', 'readAt']);
+      
+      // Users can delete their own notifications
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    // Sync collection - Real-time sync events
+    match /sync/{syncId} {
+      // System processes can read sync events
+      allow read: if false; // Only system processes should read sync events
+      
+      // System can write sync events
+      allow write: if false; // Only system processes should write sync events
+    }
+
+    // Media collection - Media file metadata
+    match /media/{mediaId} {
+      // Read permissions based on associated content
+      allow read: if isAuthenticated() && 
+                     (resource.data.isPublic || 
+                      resource.data.ownerId == request.auth.uid ||
+                      isAdmin());
+      
+      // Create permissions - Users can upload media
+      allow create: if isAuthenticated() && 
+                     request.resource.data.ownerId == request.auth.uid &&
+                     request.resource.data.createdAt == request.time &&
+                     request.resource.data.size() < 10485760; // 10MB limit
+      
+      // Update permissions - Media owners can update their media
+      allow write: if isAuthenticated() && 
+                     resource.data.ownerId == request.auth.uid &&
+                     request.resource.data.updatedAt == request.time;
+      
+      // Delete permissions - Media owners or admins can delete
+      allow delete: if isAuthenticated() && 
+                     (resource.data.ownerId == request.auth.uid || isAdmin());
+    }
+
+    // Settings collection - Application settings
+    match /settings/{settingId} {
+      // Anyone can read public settings
+      allow read: if resource.data.isPublic;
+      
+      // Only admins can write settings
+      allow write: if isAdmin();
+      
+      // Only admins can create settings
+      allow create: if isAdmin();
+      
+      // Only admins can delete settings
+      allow delete: if isAdmin();
+    }
+
+    // Logs collection - Application logs
+    match /logs/{logId} {
+      // Only admins can read logs
+      allow read: if isAdmin();
+      
+      // System can write logs
+      allow write: if false; // Only system processes should write logs
+      
+      // System can create logs
+      allow create: if false; // Only system processes should create logs
+    }
+
+    // Cache collection - Cached data
+    match /cache/{cacheId} {
+      // Anyone can read cache
+      allow read: if true;
+      
+      // System can write cache
+      allow write: if false; // Only system processes should write cache
+      
+      // System can create cache
+      allow create: if false; // Only system processes should create cache
+      
+      // System can delete cache
+      allow delete: if false; // Only system processes should delete cache
+    }
+
+    // Partners collection - Partner organizations
+    match /partners/{partnerId} {
+      // Anyone can read published partners
+      allow read: if resource.data.status == 'published' || isAdmin();
+      
+      // Only admins can create partners
+      allow create: if isAdmin() && 
+                      request.resource.data.keys().hasAll(['name', 'type', 'status']) &&
+                      request.resource.data.status in ['draft', 'published', 'archived'];
+      
+      // Only admins can update partners
+      allow write: if isAdmin() && 
+                     request.resource.data.updatedAt == request.time &&
+                     request.resource.data.updatedBy == request.auth.uid;
+      
+      // Only admins can delete partners
+      allow delete: if isAdmin();
+    }
+
+    // Events collection - Events and workshops
+    match /events/{eventId} {
+      // Anyone can read published events
+      allow read: if resource.data.status == 'published' || isEditor();
+      
+      // Editors can create events
+      allow create: if isEditor() && 
+                      request.resource.data.keys().hasAll(['title', 'description', 'date', 'status']) &&
+                      request.resource.data.status in ['draft', 'published', 'cancelled'] &&
+                      request.resource.data.createdAt == request.time &&
+                      request.resource.data.createdBy == request.auth.uid;
+      
+      // Event creators or admins can update events
+      allow write: if (isEditor() && 
+                      request.resource.data.updatedAt == request.time &&
+                      request.resource.data.updatedBy == request.auth.uid &&
+                      (resource.data.createdBy == request.auth.uid || isAdmin())) ||
+                     (isAdmin() && 
+                      request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt', 'updatedBy']));
+      
+      // Event creators or admins can delete events
+      allow delete: if isAdmin() || (isEditor() && resource.data.createdBy == request.auth.uid);
+    }
+
+    // Comments collection - User comments on content
+    match /comments/{commentId} {
+      // Anyone can read published comments
+      allow read: if resource.data.status == 'published' || isEditor();
+      
+      // Authenticated users can create comments
+      allow create: if isAuthenticated() && 
+                      request.resource.data.keys().hasAll(['contentId', 'userId', 'content', 'status']) &&
+                      request.resource.data.userId == request.auth.uid &&
+                      request.resource.data.status in ['published', 'pending'] &&
+                      request.resource.data.createdAt == request.time;
+      
+      // Comment authors can update their own comments
+      allow write: if isAuthenticated() && 
+                     resource.data.userId == request.auth.uid &&
+                     request.resource.data.updatedAt == request.time &&
+                     request.resource.data.diff(resource.data).affectedKeys().hasOnly(['content', 'status']);
+      
+      // Comment authors or admins can delete comments
+      allow delete: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+    }
+
+    // Deny all other operations
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

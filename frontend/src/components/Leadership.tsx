@@ -1,0 +1,141 @@
+import React from 'react';
+import { motion } from 'framer-motion';
+import { Linkedin, Twitter, Mail } from 'lucide-react';
+
+const Leadership = () => {
+  const leaders = [
+    {
+      id: 1,
+      name: "Mrs. Hajia Fati Forgor", 
+      position: "Executive Director",
+      bio: "Leading Ghana's school feeding initiative with dedication and commitment to ensuring every child receives nutritious meals for better education and health outcomes.",
+      image: "/Our Leadership.jpeg",
+      linkedin: "#",
+      twitter: "#",
+      email: "hajia.fati@gsfp.gov.gh"
+    }
+  ];
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.2
+      }
+    }
+  };
+
+  const cardVariants = {
+    hidden: { y: 50, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        duration: 0.6,
+        ease: "easeOut"
+      }
+    }
+  };
+
+  return (
+    <section className="py-20 bg-white" id="leadership">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-16"
+        >
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+            Our Leadership
+          </h2>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            Meet the dedicated professional driving Ghana's school feeding revolution
+          </p>
+        </motion.div>
+
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.1 }}
+          className="grid md:grid-cols-1 lg:grid-cols-1 gap-8 max-w-2xl mx-auto"
+        >
+          {leaders.map((leader) => (
+            <motion.div
+              key={leader.id}
+              variants={cardVariants}
+              whileHover={{ y: -5, transition: { duration: 0.3 } }}
+              className="bg-white rounded-xl shadow-lg p-6 group hover:shadow-xl transition-all duration-300"
+            >
+              <div className="text-center mb-4">
+                <div className="w-[24rem] h-[24rem] mx-auto mb-8 rounded-full overflow-hidden shadow-2xl">
+                  <img 
+                    src={leader.image} 
+                    alt={leader.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.src = '/api/placeholder/320/320';
+                    }}
+                  />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors duration-300">
+                  {leader.name}
+                </h3>
+                <p className="text-blue-600 font-medium mb-4">
+                  {leader.position}
+                </p>
+              </div>
+              <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                {leader.bio}
+              </p>
+              <div className="flex justify-center space-x-3">
+                <a
+                  href={leader.linkedin}
+                  className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full transition-colors duration-200"
+                >
+                  <Linkedin className="h-4 w-4" />
+                </a>
+                <a
+                  href={leader.twitter}
+                  className="bg-blue-400 hover:bg-blue-500 text-white p-2 rounded-full transition-colors duration-200"
+                >
+                  <Twitter className="h-4 w-4" />
+                </a>
+                <a
+                  href={`mailto:${leader.email}`}
+                  className="bg-gray-600 hover:bg-gray-700 text-white p-2 rounded-full transition-colors duration-200"
+                >
+                  <Mail className="h-4 w-4" />
+                </a>
+              </div>
+            </motion.div>
+          ))}
+        </motion.div>
+
+        {/* Call to Action */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.4, duration: 0.6 }}
+          className="text-center mt-16"
+        >
+          <h3 className="text-2xl font-bold text-gray-900 mb-4">
+            Join Our Team
+          </h3>
+          <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
+            We're always looking for passionate individuals to help us nourish Ghana's future. Check out our career opportunities.
+          </p>
+          <button className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg transition-colors duration-300 shadow-lg hover:shadow-xl">
+            View Careers
+          </button>
+        </motion.div>
+      </div>
+    </section>
+  );
+};
+
+export default Leadership;

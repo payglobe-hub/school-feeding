@@ -1,0 +1,142 @@
+// Import mock Firebase for development
+import * as MockFirebase from './mockFirebase';
+import { configManager } from '../shared/config-manager';
+
+// Import real Firebase functions
+import {
+  initializeApp
+} from 'firebase/app';
+import {
+  getAuth
+} from 'firebase/auth';
+import {
+  getFirestore
+} from 'firebase/firestore';
+import {
+  collection,
+  doc,
+  setDoc,
+  getDoc,
+  updateDoc,
+  deleteDoc,
+  getDocs,
+  query,
+  where,
+  orderBy,
+  limit,
+  Timestamp,
+  onSnapshot,
+  addDoc,
+  writeBatch
+} from 'firebase/firestore';
+import {
+  ref,
+  uploadBytes,
+  getDownloadURL,
+  deleteObject,
+  getStorage
+} from 'firebase/storage';
+
+let auth, db, storage, app;
+let isInitialized = false;
+
+function initializeFirebase() {
+  if (isInitialized) return;
+  
+  try {
+    // Ensure config manager is initialized first
+    const config = configManager.initialize();
+    const firebaseConfig = configManager.getFirebaseConfig();
+    
+    if (config.isDevelopment || !firebaseConfig.apiKey) {
+      // Use mock Firebase for local development and when Firebase credentials are not provided
+      auth = MockFirebase.auth;
+      db = MockFirebase.db;
+      storage = MockFirebase.storage;
+      app = MockFirebase.app;
+      console.log('Using Mock Firebase services (Admin)');
+    } else {
+      // Real Firebase for production when credentials are provided
+      // Initialize Firebase
+      app = initializeApp(firebaseConfig);
+
+      // Initialize services
+      auth = getAuth(app);
+      db = getFirestore(app);
+      storage = getStorage(app);
+      console.log('Using real Firebase services (Admin)');
+    }
+    isInitialized = true;
+  } catch (error) {
+    console.warn('Firebase not initialized yet, using mock services:', error);
+    // Fallback to mock services
+    auth = MockFirebase.auth;
+    db = MockFirebase.db;
+    storage = MockFirebase.storage;
+    app = MockFirebase.app;
+    isInitialized = true;
+  }
+}
+
+// Initialize immediately if possible, otherwise defer
+try {
+  initializeFirebase();
+} catch (error) {
+  // Config not ready yet, will be initialized by App.tsx
+  console.log('Firebase initialization deferred until config is loaded');
+}
+
+// Export functions that ensure Firebase is initialized
+export function getFirebaseServices() {
+  if (!isInitialized) {
+    initializeFirebase();
+  }
+  return { auth, db, storage, app };
+}
+
+// Export appropriate Firebase functions based on current mode
+export const firestoreFunctions = () => {
+  if (!isInitialized) {
+    initializeFirebase();
+  }
+  // If using mock Firebase, export mock functions, otherwise export real functions
+  if (db === MockFirebase.db) {
+    // Mock Firebase functions
+    return {
+      collection: MockFirebase.collection,
+      doc: MockFirebase.doc,
+      setDoc: MockFirebase.setDoc,
+      getDoc: MockFirebase.getDoc,
+      updateDoc: MockFirebase.updateDoc,
+      deleteDoc: MockFirebase.deleteDoc,
+      getDocs: MockFirebase.getDocs,
+      query: MockFirebase.query,
+      where: MockFirebase.where,
+      orderBy: MockFirebase.orderBy,
+      addDoc: MockFirebase.addDoc,
+      Timestamp: MockFirebase.serverTimestamp
+    };
+  } else {
+    // Real Firebase functions
+    return {
+      collection,
+      doc,
+      setDoc,
+      getDoc,
+      updateDoc,
+      deleteDoc,
+      getDocs,
+      query,
+      where,
+      orderBy,
+      limit,
+      Timestamp,
+      onSnapshot,
+      addDoc,
+      writeBatch
+    };
+  }
+};
+
+export { auth, db, storage, initializeFirebase };
+export default app;
