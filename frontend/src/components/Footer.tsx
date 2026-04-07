@@ -19,15 +19,9 @@ const Footer = () => {
     { name: 'School Feeding', href: '#feeding' },
     { name: 'Nutrition Education', href: '#nutrition' },
     { name: 'Community Outreach', href: '#outreach' },
-    { name: 'Farmer Support', href: '#farmers' }
+    { name: 'Farmer Linkages', href: '#farmers' }
   ];
 
-  const resources = [
-    { name: 'Annual Reports', href: '#reports' },
-    { name: 'Research & Data', href: '#research' },
-    { name: 'Procurement', href: '#procurement' },
-    { name: 'Careers', href: '#careers' }
-  ];
 
   const socialLinks = [
     { 
@@ -133,20 +127,6 @@ const Footer = () => {
 
           {/* Resources & Connect */}
           <div>
-            <h3 className="text-sm font-semibold mb-2">Resources</h3>
-            <ul className="space-y-1 mb-3">
-              {resources.map((resource) => (
-                <li key={resource.name}>
-                  <a
-                    href={resource.href}
-                    className="text-ghana-neutral-200 hover:text-white transition-colors duration-200 text-sm"
-                  >
-                    {resource.name}
-                  </a>
-                </li>
-              ))}
-            </ul>
-
             {/* Social Media Links */}
             <h3 className="text-sm font-semibold mb-2">Connect With Us</h3>
             <div className="flex space-x-4">
