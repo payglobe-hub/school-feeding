@@ -10,10 +10,34 @@ import {
 } from '../services/firebase';
 import { db } from '../services/firebase';
 
+const localPhotos = [
+  { id: 'hero1', title: 'School Feeding Programme', description: 'Children enjoying nutritious meals at school', url: '/media/Hero1.jpg', thumbnail: '/media/Hero1.jpg', category: 'Programme', location: 'Ghana', date: '2025-01-15', tags: ['feeding', 'children'], isFeatured: true },
+  { id: 'hero2', title: 'School Feeding in Action', description: 'Serving meals to school children across Ghana', url: '/media/Hero2.jpg', thumbnail: '/media/Hero2.jpg', category: 'Programme', location: 'Ghana', date: '2025-01-14', tags: ['feeding', 'schools'], isFeatured: true },
+  { id: 'hero4', title: 'Nourishing Ghana\'s Future', description: 'The Ghana School Feeding Programme at work', url: '/media/Hero4.jpg', thumbnail: '/media/Hero4.jpg', category: 'Programme', location: 'Ghana', date: '2025-01-13', tags: ['feeding', 'nutrition'], isFeatured: true },
+  { id: 'sch1', title: 'School Feeding Activity', description: 'Students receiving daily balanced meals', url: '/media/Sch1.jpg', thumbnail: '/media/Sch1.jpg', category: 'Schools', location: 'Ghana', date: '2025-02-10', tags: ['school', 'meals'], isFeatured: false },
+  { id: 'sch2', title: 'Nutrition at Schools', description: 'Promoting healthy eating habits in schools', url: '/media/Sch2.jpg', thumbnail: '/media/Sch2.jpg', category: 'Schools', location: 'Ghana', date: '2025-02-09', tags: ['nutrition', 'education'], isFeatured: false },
+  { id: 'sch3', title: 'Feeding Programme Coverage', description: 'Expanding the reach of school feeding across regions', url: '/media/Sch3.jpg', thumbnail: '/media/Sch3.jpg', category: 'Schools', location: 'Ghana', date: '2025-02-08', tags: ['coverage', 'regions'], isFeatured: false },
+  { id: 'sch4', title: 'School Meal Service', description: 'Daily meal service at a participating school', url: '/media/Sch4.jpg', thumbnail: '/media/Sch4.jpg', category: 'Schools', location: 'Ghana', date: '2025-02-07', tags: ['meals', 'service'], isFeatured: false },
+  { id: 'sch5', title: 'Children at Lunch', description: 'Children enjoying their daily school meals', url: '/media/Sch5.jpg', thumbnail: '/media/Sch5.jpg', category: 'Schools', location: 'Ghana', date: '2025-02-06', tags: ['children', 'lunch'], isFeatured: false },
+  { id: 'sch6', title: 'School Feeding Impact', description: 'Improving attendance and academic performance', url: '/media/Sch6.jpg', thumbnail: '/media/Sch6.jpg', category: 'Schools', location: 'Ghana', date: '2025-02-05', tags: ['impact', 'attendance'], isFeatured: false },
+  { id: 'sch7', title: 'Community Involvement', description: 'Community participation in the feeding programme', url: '/media/Sch7.jpg', thumbnail: '/media/Sch7.jpg', category: 'Community', location: 'Ghana', date: '2025-02-04', tags: ['community', 'involvement'], isFeatured: false },
+  { id: 'sch8', title: 'Programme Highlights', description: 'Key moments from the School Feeding Programme', url: '/media/Sch8.jpg', thumbnail: '/media/Sch8.jpg', category: 'Programme', location: 'Ghana', date: '2025-02-03', tags: ['highlights', 'programme'], isFeatured: false },
+  { id: 'sch9', title: 'Healthy Meals for All', description: 'Ensuring every child gets a nutritious meal', url: '/media/Sch9.jpg', thumbnail: '/media/Sch9.jpg', category: 'Programme', location: 'Ghana', date: '2025-02-02', tags: ['health', 'nutrition'], isFeatured: false },
+  { id: 'cat1', title: 'Local Caterers at Work', description: 'Local caterers preparing meals for school children', url: '/media/cat1.jpg', thumbnail: '/media/cat1.jpg', category: 'Caterers', location: 'Ghana', date: '2025-03-10', tags: ['caterers', 'cooking'], isFeatured: false },
+  { id: 'cat2', title: 'Catering Operations', description: 'Behind the scenes of school meal preparation', url: '/media/cat2.jpg', thumbnail: '/media/cat2.jpg', category: 'Caterers', location: 'Ghana', date: '2025-03-09', tags: ['caterers', 'operations'], isFeatured: false },
+  { id: 'cat3', title: 'Food Preparation', description: 'Preparing nutritious locally-sourced meals', url: '/media/cat3.jpg', thumbnail: '/media/cat3.jpg', category: 'Caterers', location: 'Ghana', date: '2025-03-08', tags: ['food', 'preparation'], isFeatured: false },
+  { id: 'cat4', title: 'Kitchen Activities', description: 'School feeding kitchen in full operation', url: '/media/cat4.jpg', thumbnail: '/media/cat4.jpg', category: 'Caterers', location: 'Ghana', date: '2025-03-07', tags: ['kitchen', 'cooking'], isFeatured: false },
+  { id: 'cat5', title: 'Caterer Partnership', description: 'Working with local caterers to deliver quality meals', url: '/media/cat5.jpg', thumbnail: '/media/cat5.jpg', category: 'Caterers', location: 'Ghana', date: '2025-03-06', tags: ['partnership', 'caterers'], isFeatured: false },
+  { id: 'cat6', title: 'Meal Distribution', description: 'Distributing meals to school children', url: '/media/cat6.jpg', thumbnail: '/media/cat6.jpg', category: 'Caterers', location: 'Ghana', date: '2025-03-05', tags: ['distribution', 'meals'], isFeatured: false },
+  { id: 'cat7', title: 'Local Food Sourcing', description: 'Supporting local farmers through food procurement', url: '/media/cat7.jpg', thumbnail: '/media/cat7.jpg', category: 'Caterers', location: 'Ghana', date: '2025-03-04', tags: ['local', 'farming'], isFeatured: false },
+  { id: 'cat8', title: 'Catering Excellence', description: 'Maintaining high standards in meal preparation', url: '/media/cat8.jpg', thumbnail: '/media/cat8.jpg', category: 'Caterers', location: 'Ghana', date: '2025-03-03', tags: ['quality', 'standards'], isFeatured: false },
+  { id: 'cat9', title: 'Feeding Programme Support', description: 'Caterers supporting the national feeding initiative', url: '/media/cat9.jpg', thumbnail: '/media/cat9.jpg', category: 'Caterers', location: 'Ghana', date: '2025-03-02', tags: ['support', 'programme'], isFeatured: false },
+];
+
 const MediaCentre = () => {
-  const [photos, setPhotos] = useState([]);
+  const [photos, setPhotos] = useState(localPhotos);
   const [videos, setVideos] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('photos');
   const [selectedItem, setSelectedItem] = useState(null);
@@ -85,11 +109,10 @@ const MediaCentre = () => {
         };
       });
 
-      setPhotos(photosData);
+      setPhotos([...localPhotos, ...photosData]);
       setVideos(videosData);
     } catch (err) {
       console.error('Error fetching media:', err);
-      setError('Failed to load media content. Please try again later.');
     } finally {
       setLoading(false);
     }
