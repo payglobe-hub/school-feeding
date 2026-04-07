@@ -21,8 +21,7 @@ const Programs = () => {
       features: [
         'Daily balanced meals',
         'Local farmer partnerships',
-        'Nutritional education',
-        'Health monitoring'
+        'Monitoring'
       ],
       stats: '2M+ Children Served Daily',
       color: 'ghana-secondary'
@@ -33,9 +32,7 @@ const Programs = () => {
       icon: Apple,
       description: 'Comprehensive nutrition education programs teaching children and families about healthy eating habits and food security.',
       features: [
-        'School curriculum integration',
         'Community workshops',
-        'Parent education',
         'Cooking demonstrations'
       ],
       stats: '16 Regions Covered',
@@ -47,8 +44,7 @@ const Programs = () => {
       icon: Users,
       description: 'Extending nutrition support beyond schools through community programs, farmer training, and sustainable agriculture initiatives.',
       features: [
-        'Farmer training programs',
-        'Community gardens',
+        'Farmer Linkages programs',
         'Food security initiatives',
         'Local business development'
       ],
@@ -173,19 +169,6 @@ const Programs = () => {
                     ))}
                   </div>
 
-                  {/* Learn More Button */}
-                  <button 
-                    onClick={() => {
-                      const element = document.getElementById(program.id);
-                      if (element) {
-                        element.scrollIntoView({ behavior: 'smooth' });
-                      }
-                    }}
-                    className="w-full bg-ghana-primary-50 hover:bg-ghana-primary-100 text-ghana-primary-700 font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center group cursor-pointer"
-                  >
-                    Learn More
-                    <Target className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform duration-200" />
-                  </button>
                 </div>
               </motion.div>
             );
