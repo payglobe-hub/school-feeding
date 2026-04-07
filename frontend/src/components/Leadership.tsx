@@ -7,7 +7,7 @@ const Leadership = () => {
     {
       id: 1,
       name: "Mrs. Hajia Fati Forgor", 
-      position: "Executive Director",
+      position: "National Coordinator",
       bio: "Leading Ghana's school feeding initiative with dedication and commitment to ensuring every child receives nutritious meals for better education and health outcomes.",
       image: "/Our Leadership.jpeg",
       linkedin: "#",
@@ -115,24 +115,6 @@ const Leadership = () => {
           ))}
         </motion.div>
 
-        {/* Call to Action */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.4, duration: 0.6 }}
-          className="text-center mt-16"
-        >
-          <h3 className="text-2xl font-bold text-gray-900 mb-4">
-            Join Our Team
-          </h3>
-          <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-            We're always looking for passionate individuals to help us nourish Ghana's future. Check out our career opportunities.
-          </p>
-          <button className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg transition-colors duration-300 shadow-lg hover:shadow-xl">
-            View Careers
-          </button>
-        </motion.div>
       </div>
     </section>
   );

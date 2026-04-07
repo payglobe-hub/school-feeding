@@ -119,31 +119,6 @@ const Mandates = () => {
         </motion.div>
 
         {/* Call to Action */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.4, duration: 0.6 }}
-          className="text-center mt-16"
-        >
-          <div className="bg-white rounded-2xl shadow-lg p-8 max-w-4xl mx-auto">
-            <h3 className="text-2xl font-bold text-gray-900 mb-4">
-              Committed to Excellence
-            </h3>
-            <p className="text-gray-600 mb-6 text-lg">
-              Our mandates are not just words on paper - they are the foundation of our daily operations and the measure of our success.
-              We work tirelessly to fulfill each mandate, ensuring that every Ghanaian child receives the nutrition they need to thrive.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg transition-colors duration-300 shadow-lg hover:shadow-xl">
-                Read Our Annual Report
-              </button>
-              <button className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg transition-colors duration-300 shadow-lg hover:shadow-xl">
-                View Program Guidelines
-              </button>
-            </div>
-          </div>
-        </motion.div>
       </div>
     </section>
   );

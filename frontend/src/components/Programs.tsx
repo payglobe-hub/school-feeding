@@ -205,34 +205,6 @@ const Programs = () => {
           </div>
         </motion.div>
 
-        {/* Call to Action */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.6, duration: 0.6 }}
-          className="text-center"
-        >
-          <div className="bg-gradient-to-r from-ghana-primary-600 to-ghana-primary-700 rounded-2xl p-8 text-white">
-            <h3 className="text-2xl font-bold mb-4">Support Our Programs</h3>
-            <p className="text-ghana-primary-100 mb-6 max-w-2xl mx-auto">
-              Your contribution helps us expand our nutrition programs and reach more children across Ghana.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button 
-                onClick={() => {
-                  const element = document.getElementById('mandates');
-                  if (element) {
-                    element.scrollIntoView({ behavior: 'smooth' });
-                  }
-                }}
-                className="border-2 border-white text-white hover:bg-white hover:text-ghana-primary-700 font-bold py-3 px-8 rounded-lg transition-colors duration-200 cursor-pointer"
-              >
-                Learn More
-              </button>
-            </div>
-          </div>
-        </motion.div>
       </div>
     </section>
   );
