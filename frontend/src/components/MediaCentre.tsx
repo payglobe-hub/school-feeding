@@ -34,6 +34,33 @@ const localPhotos = [
   { id: 'cat9', title: 'Feeding Programme Support', description: 'Caterers supporting the national feeding initiative', url: '/media/cat9.jpg', thumbnail: '/media/cat9.jpg', category: 'Caterers', location: 'Ghana', date: '2025-03-02', tags: ['support', 'programme'], isFeatured: false },
 ];
 
+const categories = [
+  {
+    id: 'featured',
+    name: 'Featured Highlights',
+    description: 'Key moments and achievements from the Ghana School Feeding Programme',
+    previewImage: '/media/Hero1.jpg',
+    filter: (photo) => photo.isFeatured,
+    count: localPhotos.filter(p => p.isFeatured).length
+  },
+  {
+    id: 'schools',
+    name: 'School Programme Photos',
+    description: 'Daily school feeding activities and programme implementation',
+    previewImage: '/media/Sch1.jpg',
+    filter: (photo) => photo.category === 'Schools' || photo.category === 'Programme',
+    count: localPhotos.filter(p => p.category === 'Schools' || p.category === 'Programme').length
+  },
+  {
+    id: 'caterers',
+    name: 'Caterer Operations',
+    description: 'Local caterers and food preparation activities',
+    previewImage: '/media/cat1.jpg',
+    filter: (photo) => photo.category === 'Caterers',
+    count: localPhotos.filter(p => p.category === 'Caterers').length
+  }
+];
+
 const MediaCentre = () => {
   const [photos, setPhotos] = useState(localPhotos);
   const [videos, setVideos] = useState([]);
@@ -42,6 +69,8 @@ const MediaCentre = () => {
   const [activeTab, setActiveTab] = useState('photos');
   const [selectedItem, setSelectedItem] = useState(null);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [activeCategory, setActiveCategory] = useState(null);
+  const [filteredPhotos, setFilteredPhotos] = useState([]);
 
   useEffect(() => {
     fetchMedia();
@@ -126,15 +155,26 @@ const MediaCentre = () => {
     });
   };
 
-  const currentItems = activeTab === 'photos' ? photos : videos;
+  const currentItems = activeTab === 'photos' ? (activeCategory ? filteredPhotos : photos) : videos;
 
-  const openLightbox = (item, index) => {
-    setSelectedItem(item);
-    setLightboxIndex(index);
+  const openCategoryGallery = (category) => {
+    const filtered = photos.filter(category.filter);
+    setFilteredPhotos(filtered);
+    setActiveCategory(category.id);
+    if (filtered.length > 0) {
+      setSelectedItem(filtered[0]);
+      setLightboxIndex(0);
+    }
   };
 
   const closeLightbox = () => {
     setSelectedItem(null);
+    setActiveCategory(null);
+  };
+
+  const openLightbox = (item, index) => {
+    setSelectedItem(item);
+    setLightboxIndex(index);
   };
 
   const navigateLightbox = (direction) => {
@@ -236,7 +276,45 @@ const MediaCentre = () => {
         </div>
 
         {/* Content Grid */}
-        {currentItems.length > 0 ? (
+        {activeTab === 'photos' && !activeCategory ? (
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="grid grid-cols-1 md:grid-cols-3 gap-8"
+          >
+            {categories.map((category, index) => (
+              <motion.div
+                key={category.id}
+                variants={cardVariants}
+                whileHover={{ y: -5, transition: { duration: 0.3 } }}
+                className="bg-white rounded-xl shadow-lg overflow-hidden group hover:shadow-xl transition-all duration-300 cursor-pointer"
+                onClick={() => openCategoryGallery(category)}
+              >
+                <div className="relative overflow-hidden h-48">
+                  <img
+                    src={category.previewImage}
+                    alt={category.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                  <div className="absolute bottom-4 left-4 text-white">
+                    <h3 className="text-xl font-bold mb-1">{category.name}</h3>
+                    <p className="text-sm opacity-90">{category.count} photos</p>
+                  </div>
+                </div>
+                <div className="p-6">
+                  <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+                    {category.description}
+                  </p>
+                  <button className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200">
+                    View Gallery
+                  </button>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        ) : currentItems.length > 0 ? (
           <motion.div
             key={activeTab}
             variants={containerVariants}
@@ -386,6 +464,20 @@ const MediaCentre = () => {
               </div>
 
               <div className="p-6">
+                {activeCategory && (
+                  <div className="mb-4">
+                    <button
+                      onClick={closeLightbox}
+                      className="text-green-600 hover:text-green-700 font-medium text-sm flex items-center gap-2 mb-2"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      Back to Categories
+                    </button>
+                    <div className="text-sm text-gray-500">
+                      {categories.find(c => c.id === activeCategory)?.name} - {lightboxIndex + 1} / {currentItems.length}
+                    </div>
+                  </div>
+                )}
                 <h3 className="text-xl font-bold text-gray-900 mb-2">{selectedItem.title}</h3>
                 <p className="text-gray-600 mb-4">{selectedItem.description}</p>
                 <div className="flex items-center gap-6 text-sm text-gray-500">

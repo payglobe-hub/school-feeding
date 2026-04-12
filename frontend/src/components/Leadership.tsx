@@ -71,11 +71,11 @@ const Leadership = () => {
               className="bg-white rounded-xl shadow-lg p-6 group hover:shadow-xl transition-all duration-300"
             >
               <div className="text-center mb-4">
-                <div className="w-[24rem] h-[24rem] mx-auto mb-8 rounded-full overflow-hidden shadow-2xl">
+                <div className="w-[24rem] h-[32rem] mx-auto mb-8 rounded-lg overflow-hidden shadow-2xl">
                   <img 
                     src={leader.image} 
                     alt={leader.name}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain"
                     onError={(e) => {
                       e.currentTarget.src = '/api/placeholder/320/320';
                     }}

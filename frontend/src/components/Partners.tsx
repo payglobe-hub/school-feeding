@@ -15,11 +15,11 @@ const Partners = () => {
     },
     {
       id: 2,
-      name: "Ghana Ministry of Education",
+      name: "Ghana Education Service",
       logo: "/coat1.jpg",
       type: "Government Partner",
       description: "Collaborating on policy development and ensuring alignment with national education goals.",
-      website: "https://www.moe.gov.gh",
+      website: "https://ges.gov.gh/",
       category: "government"
     },
     {
@@ -37,8 +37,26 @@ const Partners = () => {
       logo: "/coat1.jpg",
       type: "Government Partner",
       description: "Providing nutritional guidelines and health monitoring for school children.",
-      website: "https://www.ghanahealthservice.org",
+      website: "https://ghs.gov.gh/",
       category: "government"
+    },
+    {
+      id: 5,
+      name: "Ministry of Gender, Children and Social Protection",
+      logo: "/coat1.jpg",
+      type: "Government Partner",
+      description: "Ensuring child protection and social welfare in school feeding programs.",
+      website: "https://www.mogcsp.gov.gh/",
+      category: "government"
+    },
+    {
+      id: 6,
+      name: "World Bank",
+      logo: "/world-bank-logo.svg",
+      type: "International Partner",
+      description: "Providing financial support and technical assistance for sustainable school feeding programs.",
+      website: "https://www.worldbank.org",
+      category: "international"
     },
   ];
 
